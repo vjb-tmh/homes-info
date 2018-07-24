@@ -1,0 +1,521 @@
+<!doctype html>
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<title>Info - Homes.com</title>
+<link rel="stylesheet" href="styles.css" type="text/css" />
+<meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0" />
+<style type="text/css">
+<!--
+.tab { margin-left: 40px; }
+
+a:link {
+       text-decoration: none;
+}
+
+a:visited {
+       color: blue;
+       text-decoration: none;
+}
+
+a:hover {
+       background-color: yellow;
+}
+
+a:active {
+       text-decoration: underline;
+}
+-->
+</style>
+</head>
+
+<body>
+	<section id="body" class="width">
+		<aside id="sidebar" class="column-left">
+			<header id="thehead"></header>
+			<nav id="mainnav"></nav>
+		</aside>
+	<section id="content" class="column-right">
+	    <article id="top">
+			<h2 id="top">Dev Notes</h2>
+			<!--<div class="article-info">Posted on <time datetime="2013-05-14">14 May</time> by <a href="#" rel="author">Joe Bloggs</a></div>-->
+		<p>
+			<ul>
+				<li><a class="notnav" href="#wf">Workflow</a></li>
+				<li><a class="notnav" href="#data">Dataflow</a></li>
+				<li><a class="notnav" href="#data">Code</a></li>
+				<li><a class="notnav" href="#dev">Dev Process</a></li>
+				<li><a class="notnav" href="#version">Version Numbers</a></li>
+				<li><a class="notnav" href="#ticket">Tickets</a></li>
+				<li><a class="notnav" href="#serv">Servers</a></li>
+				<li><a class="notnav" href="#misc">Misc</a></li>
+				<li><a class="notnav" href="#git">Git</a></li>
+				<li><a class="notnav" href="#perl">Perl</a></li>
+				<li><a class="notnav" href="#python">Python</a></li>
+				<li><a class="notnav" href="#ssh">SSH</a></li>
+				<li><a class="notnav" href="#vagrant">Vagrant</a></li>
+				<li><a class="notnav" href="#ctag">Ctags</a></li>
+			</ul>
+			</p>
+		</article>
+
+      <article id="wf">
+         <h3>Workflow</h3>
+         <p>
+<pre>
+---+ Fork repo:
+
+      Go to: https://github.dominionenterprises.com/Homes-Data
+      Find the repo
+      Click 'Fork'
+
+---+ Create branch with ticket number:
+
+      Go to your account
+      Find the repo
+      Click on 'Branch' button and enter new branch name
+
+---+ Clone it locally:
+
+      git clone https://github.dominionenterprises.com/victor-brunell/&ltrepo-name>
+
+---+ Set up repo to use ssh keys:
+
+      git remote set-url origin git://git@github.dominionenterprises.com/Homes-Data/&ltrepo-name>
+
+---+ Be sure to change the repo name to match the directory structure.
+
+      For example, if you cloned Pipeline-Impressions into ~/code/Pipeline:
+
+         cd ~/code/Pipeline
+         mv Pipeline-Impressions Impressions
+
+      Also, make sure any repo dependencies exist in their correct directories
+      and all environment files are up to date.
+
+---+ Fetch and switch to the branch:
+
+      git fetch &ltremote-name>
+      git checkout &ltbranch-name>
+
+---+ Do some work to fix bugs or add features, then check the syntax:
+
+      perl -c myfile.pl
+
+---+ Then stage, commit, push to remote branch:
+
+      git add &ltsome-files>
+      git commit -m "a message"
+      git push origin &ltbranch-name>
+
+---+ Get on a dev server and clone the branch in the appropriate repo in /code:
+
+      ssh -vi ~/.ssh/serv-key brunellv@pipeline11.dev.homes.com
+      cd /code/&ltpath-to-where-your-repo-should-exist>
+      git remote -v
+      git remote add brunell git@github.dominionenterprises.com:victor-brunell/&ltrepo-name>.git
+      git fetch brunell
+      git checkout -b brunell/&ltbranch-name>
+
+---+ Run some tests:
+
+      Might need to add jobs to queues:
+
+         * Use a gen script.
+         * Find values to add to the script in the database.
+
+         For info on which queues to use:
+
+            * ask someone
+            * look up RabbitMQ or something like that in the code and try to track it down
+            * check environment.pm
+
+      Check environment.pm files in Common directories for relevant values like:
+
+         * Config initialization
+         * Queue or DB login info
+
+      To test workers:
+
+         perl myfile.perl --force --runonce  // this runs the worker on a single job
+         perl myfile.perl  // runs it on all jobs in the queue
+
+---+ When the script finishes, check the logs.
+
+      For example:
+
+         If you run Pipeline code, check:
+
+            /code/Pipeline/Logs/
+
+         If you ran the listimp.pl script, check:
+
+            listimp.log.&ltservername>
+
+---+ If there are bugs in the program, check the logs and see what printed last, then look for that
+     message in the code to see where the program stopped.  Insert some print statements and run it
+     again to track down where it broke.
+
+---+ When finished and PR accepted, clean up:
+
+      Remove Local Git Branches and leave master:
+
+         git branch | grep -v "master" | xargs git branch -D
+
+      Remove remote and local branch:
+
+         git push --delete &ltremote_name> &ltbranch_name>
+         git branch -d &ltbranch_name>
+
+---+ If you need DB data, use DBeaver, run some queries, and extract data in whatever format:
+      * Run a query
+      * Select the resulting records
+      * Right click and select ExportResultSet
+      * scp the data onto the dev server
+      * Pop it open and extract it to stick it in a hash to send to the queue for jobs
+</pre>
+      </p>
+      </article>
+
+		<article id="data">
+			<h3>Dataflow</h3>
+			<a href="imgs/dataflow.jpg">Dataflow Diagram</a>
+			<br><a href="imgs/dataflow.pdf">Dataflow Description</a>
+		</article>
+
+      <article id="dev">
+         <h3>Dev Process</h3>
+         <a href="docs/style.pdf">Style Guidelines</a>
+         <br><a href="docs/newbq.pdf">Newb Guide</a>
+         <p>The process is:
+			<ol>
+				<li>fork the repo you're working in to your own account</li>
+				<li>Then push changes to your local copy using branches named after the ticket number</li>
+				<li>Test first using Vagrant, then on one of the dev servers.</li>
+				<li>Then you push the request through to the Homes-Data/master branch</li>
+				<li>Once it's reviewed and ready, it will get accepted into that branch.</li>
+			</ol>
+		</p>
+		<p>You'll see some statements in the code like "require "Pipeline/.../&ltfile>".
+			<br>The "Pipeline/.../" part is specific to a repo, so "/Pipeline/Common" would refer to the Pipeline-Common repo.
+			<br>You can use this mechanic to walk through some of the other included code that those two starter repos use.
+		</p>
+		<p>
+		<br>Use different SSH keys for production and dev.
+		<br>Also, keep a local copy of both your private and public dev keys.
+		<br>The dev servers get rebuilt every Sunday, and you'll have to put your keys back on-server after that unless you want to regenerate new dev keys for github every week.
+		</p>
+	</article>
+
+   <article>
+      <h3>Code</h3>
+<pre>
+Code in Pipeline/Bulk/&ltFeed-Name>/Interface.pm is used to package raw data coming from the various feeds, like DIDX.  Has stuff like:
+
+   package_listing_data()
+
+Code in Pipeline/Data holds the data worker that processes raw data from Pipeline/Bulk. Has stuff like:
+
+   if($job_message->{msg_type} eq 'listing') {
+      $res = DATA::INTERFACE::store_data(source_id => $job_data{source_id}, data => $job_data);
+   }
+
+Code in Pipeline/Data/Oracle is actually code to store data processed by the data_worker into the MSSQL database. Has stuff like:
+
+   store_data()
+   lists of data points to store
+</pre>
+   </article>
+
+      <article id="version">
+         <h3>Version Numbers</h3>
+         <p>When you make a change to code, be sure to update that repo's environment file (environment.pm or environment.py) by updating the version.</p>
+
+         <p>The basic rules are:
+            <ol>
+            <li> Each PR needs it's own version bump. Yes, this includes the case where you have two separate PRs, for the same repo, that enter review at the same time, the PRs also need the same version number increase, and one will need to be updated when it comes time to merge.*1</li>
+            <li>If your Ticket is for a Story, then be sure ti update the version's middle number by adding one, and clearing the last number, like so:</li>
+<pre>
+    1.2.3 -> 1.3.0
+    1.4.0 -> 1.5.0
+</pre>
+            <li>If your Ticket is a Bug, then you only need to add one to the last number, like so:</li>
+<pre>
+    1.2.3 -> 1.2.4
+    1.5.0 -> 1.5.1
+</pre>
+            </ol>
+         <p>   *1 =   (This applies after a module is live on prod, if the module is not yet released to prod,
+               and this is simply internal development on an upcoming initial release, then version updates appear unnecessary.)
+         </p>
+      </article>
+
+      <article id="git">
+         <h3>Git</h3>
+         <a href="docs/git.pdf">Git Reference Sheet</a>
+         <p>
+            <ol>
+            <li>Search Pull Requests</li>
+<pre>
+    is : pr / is : open
+    is : pr / is : open assignee:jason-tobias
+    is : pr / is : open reviewer:victor-brunell
+</pre>
+            <li>Set up remote origin for SSH keys:</li>
+<pre>
+    git remote set-url origin git+ssh://git@github.dominionenterprises.com/Homes-Data/Pipeline-Autosuggest
+</pre>
+      </article>
+
+      <article id="misc">
+         <h3>Misc</h3>
+         <p>
+            <ul>
+            <li>Copy files from/to remote servers</li>
+<pre>
+   Send:
+
+      scp /file/to/send brunellv@pipeline11.dev.homes.com:/where/to/put
+
+   Receive:
+
+      scp brunellv@pipeline11.dev.homes.com:/file/to/send /where/to/put
+</pre>
+            <li>
+               <p>Find queue names:</p>
+<pre>
+   Check the Pipeline-Common environment.pm file.
+</pre>
+            </li>
+            <li>
+               <p>So to test this particular issue, you would need to create an impression job with an actual MLS number that has spaces in it.
+               <br>Because none of our data has spaces in the MLS number, this indicates a malformed data case.
+               <br>So you can easily just pull the top 1 live listing record from the dev database and add a trailing space to it, and push that into the impression queue.
+               <br>Do that with the original code first, and verify that it fails.
+               <br>Then do that again with your changed code, and verify that the impression is handled correctly.
+               <br>Both of these things can be determine by viewing the logs, which exist in /code/Pipeline/Logs/ under listimp.log.<servername>
+               <br>So your next question might be, "what is a live listing, and how do I get a decent one?"</p>
+            </li>
+      </article>
+
+		<article id="serv">
+		<h3>Servers</h3>
+			<p>
+				The second list, as you can see, is the list of production servers.
+				<br>Solr has 8 boxes, 11-18.
+				<br>Most server groups typically have at least an 11, and usually a 12.
+				<br>Ultimately, the dev ones are going to be your primary concern, and most of those are not used unless something specific is being worked on.
+				<br><br>So for now, you can probably get away with just:
+				<ul>
+					<li>pipeline11-13.dev</li>
+					<li>pipebulk11-12.dev</li>
+					<li>pipedata11-12.dev</li>
+				</ul>
+			</p>
+			<p>
+				<img src="imgs/serv1.png">
+				<img src="imgs/serv2.png">
+			</p>
+		</article>
+
+      <article id="ticket">
+         <h3>Jira Tickets</h3>
+         <p>To view open tickets, sprints, etc, go to:</p>
+         <p class="tab">
+         <a href="https://homesmediasolutions.atlassian.net/browse">Ticket Site</a>
+         <br>Board --> DE Sprint Team 1
+         <br>Click on the Assignee drop down
+         <br>Select your name
+         </p>
+      </article>
+
+		<article id="vagrant">
+         <h3>Vagrant</h3>
+         <p>Vagrant set up in ~/workspace/vagrant</p>
+         <p>Shared folder is /code.  Can add files in this directory to share with
+         the vagrant instance.
+         <p>Common commands (<i>vagrant aliased to v</i>):
+            <ul>
+               <li>v up</li>
+               <li>v suspend</li>
+               <li>v halt</li>
+               <li>v reload</li>
+            </ul>
+            <a href="ref-sheets/vagrant-ref">Vagrant Notes</a>
+         </p>
+      </article>
+
+      <article id="ssh">
+         <h3>SSH</h3>
+         <p>
+				You should specify the output file, eg:
+<pre>
+		ssh-keygen -t rsa -f ~/.ssh/my-new-key
+</pre>
+				then to connect:
+<pre>
+		ssh -i ~/.ssh/my-new-key 192.168.x.x
+</pre>
+				or setup a ssh config file:
+<pre>
+		nano ~/.ssh/config
+</pre>
+				then put something like:
+<pre>
+		Host my-server
+	   	HostName 192.168.x.x
+	   	User root
+	   	Port 22
+	   	IdentityFile /home/username/.ssh/my-new-key
+</pre>
+				Finally:
+<pre>
+		ssh my-server
+</pre>
+	      </p>
+	   </article>
+
+      <article id="ctag">
+         <h3>Ctags</h3>
+         <p>
+            <ul>
+               <li>ctags -R *</li>
+               <li>vim -t <i>tag</i></i></li>
+               <li>Ctrl+] - Jump to tag under cursor</li>
+               <li>Ctrl+t - Jump up tag stack</li>
+            </ul>
+      </article>
+
+      <article id="perl">
+         <h3>Perl</h3>
+         <a href="https://michaelgoerz.net/refcards/perl_refcard.pdf">Perl Quick Reference</a>
+         <br><a href="http://www.cbkihong.com/download/perltut.pdf">Perl Tutorial</a>
+         <br><a href="https://stackoverflow.com/questions/1825300/perl-passing-arguments-to-a-subroutine-as-hash-key-value-pairs-problem">Passing Key/Value Pairs to Functions</a>
+<pre>
+# +++++ Print out hash keys/values +++++ #
+
+You can use the each function if you don't care about ordering:
+
+	while ( my($key, $value) = each %hash ) {
+	    print "$key = $value\n";
+	}
+
+Or the for / foreach construct if you want to sort it:
+
+	for my $key ( sort keys %hash ) {
+	    print "$key = $hash{$key}\n";
+	}
+
+Or if you want only certain values, you can use a hash slice, e.g.:
+
+	print "@hash{qw{2009 2010}}\n";
+
+
+# +++++ Import Functions Selectively +++++ #
+
+ One of the places where you'll often see the use of qw is where modules are loaded. You might see something like this:
+
+    use Module::Name qw/foo $bar/;
+
+From the above explanation you'll know that this is the same as
+
+    use Module::Name ('foo', '$bar');
+
+This basically means we pass this list as parameters to the import function of Module::Name which will import the 'foo' function and the '$bar' scalar variable into our code.
+
+
+# +++++ use with empty list +++++ #
+
+If you do not want to call the package's import method (for instance, to stop your namespace from being altered), explicitly supply the empty list:
+
+        use Module ();
+
+That is exactly equivalent to
+
+        BEGIN { require Module }
+
+
+# +++++ use vs require +++++ #
+
+The main difference is around import/export. use is preferred when you're making use of a module because it allows you to specify which routines you wish to import into your namespace :
+
+	# allows foo(), bar() and baz() to be used
+	use MyModule qw(foo bar baz);
+
+	# Requires explicit naming (e.g. MyModule::foo).
+	use MyModule qw();
+
+use also gives runs the module's import() procedure which is often used to set the module up.
+
+
+# +++++ @{$thing} or %{$thing} +++++ #
+
+This is a reference to whatever that is being dereferenced and converted into its original type.
+
+For example, for:
+
+	%{$records}
+
+	$records  		# must be a reference to a hash (because of the outermost %)
+	{$records} 		# is a block that returns the reference
+	%{$records} 	# gives the original hash
+
+So @{$args{settings}} means $args is a hash that contains a reference to an array as the value for the key 'settings'.
+
+
+# +++++ ref() return values +++++ #
+
+According to the documentation, the possible return values of the ref() function are:
+
+	SCALAR
+	ARRAY
+	HASH
+	CODE
+	REF
+	GLOB
+	LVALUE
+	FORMAT
+	IO
+	VSTRING
+	Regexp
+
+Passing a reference to a subroutine to the ref() function will result in the string CODE.
+A file-handle created by the open function is a GLOB.
+
+
+# +++++ hashes vs hash references +++++ #
+
+The essential difference (....) is used to create a hash. {....} is used to create a hash reference
+
+	my %hash  = ( a => 1 , b => 2 );
+
+	my $hash_ref  = { a => 1 , b => 2 };
+
+	my %hash_of_hashrefs  = (
+			a => {1 => 'one'},
+			b => {2 => 'two'}
+	) ;
+
+	my %hash_of_hashrefs_of_hashrefs  = (
+			a => {
+				1 => 'one',
+			},
+			b => {
+				2 => {
+					3 => 'three',
+					4 => 'four',
+				},
+			},
+	);
+
+In a bit more detail - {....} makes an anonymous hash and returns a reference to it wich is asigned to the scalar $hash_ref
+</pre>
+      </article>
+
+      <article id="python">
+         <h3>Python</h3>
+      </article>
+
+</body>
+</html>
